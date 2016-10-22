@@ -69,9 +69,11 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\Draw.ico"
+IDR_MAINFRAME           ICON                    "res\\proDraw.ico"
 
-IDR_DrawTYPE            ICON                    "res\\DrawDoc.ico"
+IDR_DrawTYPE            ICON                    "res\\proDraw.ico"
+
+IDI_PRODRAW             ICON                    "res\\proDraw.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////

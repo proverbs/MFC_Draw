@@ -7,6 +7,8 @@
 #define IDR_MAINFRAME                   128
 #define IDR_DrawTYPE                    130
 #define IDB_LIEKONG                     310
+#define IDI_ICON1                       311
+#define IDI_PRODRAW                     311
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_DRAW_LINE                    32773
@@ -80,7 +82,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        311
+#define _APS_NEXT_RESOURCE_VALUE        312
 #define _APS_NEXT_COMMAND_VALUE         32839
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           310

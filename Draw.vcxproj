@@ -215,6 +215,7 @@
     <Image Include="res\Draw.ico" />
     <Image Include="res\DrawDoc.ico" />
     <Image Include="res\liekong.bmp" />
+    <Image Include="res\proDraw.ico" />
     <Image Include="res\Toolbar.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
