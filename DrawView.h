@@ -12,7 +12,7 @@ protected: // 仅从序列化创建
 	DECLARE_DYNCREATE(CDrawView)
 
 public:
-	enum MYGRAPH {LINE = 1, RECTANGLE, RDRECTANGLE, ELLIPSE};// 设置图形
+	enum MYGRAPH {LINE = 1, RECTANGLE, RDRECTANGLE, ELLIPSE, OUTWORD, OUTPICTURE};// 设置图形
 	enum MYGRAPH jGraph;// 图形
 	
 
@@ -38,10 +38,25 @@ public:
 	bool brushColorSelected;// 自定义颜色
 
 	CBitmap *pBitmap;// 图片刷
-	HBITMAP hBitmap;
+
+	// 字体相关
+	CFont m_font;// 字体
+	LOGFONT m_logFont;// 逻辑字体结构
+	wchar_t m_fontName[LF_FACESIZE];// 字体名称
+	int m_iFontSize;// 字体大小
+	COLORREF m_textColor;// 字体颜色
+	BOOL m_bItalic, m_bBold, m_bUnderline, m_bStrikeOut;// 斜体，粗体，下划线，删除线
+
+	// 绘制图片
+	CImage *pImg;
+
 
 // 操作
 public:
+	BOOL SetMyFont(CDC *pDC, LPCTSTR faceName, int size, COLORREF col = RGB(0, 0, 0), int angle = 0,
+		BOOL italic = FALSE, BOOL bold = FALSE, BOOL underline = FALSE, BOOL strikeOut = FALSE);// 设置字体
+
+
 
 // 重写
 public:
@@ -122,6 +137,10 @@ public:
 	afx_msg void OnUpdateBrushOtherc(CCmdUI *pCmdUI);
 	afx_msg void OnPenOtherc();
 	afx_msg void OnUpdatePenOtherc(CCmdUI *pCmdUI);
+	afx_msg void OnDrawWord();
+	afx_msg void OnUpdateDrawWord(CCmdUI *pCmdUI);
+	afx_msg void OnDrawPicture();
+	afx_msg void OnUpdateDrawPicture(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // DrawView.cpp 中的调试版本

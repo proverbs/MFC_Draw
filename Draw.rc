@@ -151,6 +151,8 @@ BEGIN
             MENUITEM "¾ØÐÎ(&R)",                      ID_DRAW_RECT
             MENUITEM "Ô²½Ç¾ØÐÎ(&O)",                    ID_DRAW_RDRECT
             MENUITEM "ÍÖÔ²(&E)",                      ID_DRAW_ELLIPSE
+            MENUITEM "ÎÄ×Ö(&W)...",                   ID_DRAW_WORD
+            MENUITEM "Í¼Æ¬(&P)...",                   ID_DRAW_PICTURE
         END
         POPUP "±Ê(&P)"
         BEGIN

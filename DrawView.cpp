@@ -82,6 +82,10 @@ ON_COMMAND(ID_BRUSH_OTHERC, &CDrawView::OnBrushOtherc)
 ON_UPDATE_COMMAND_UI(ID_BRUSH_OTHERC, &CDrawView::OnUpdateBrushOtherc)
 ON_COMMAND(ID_PEN_OTHERC, &CDrawView::OnPenOtherc)
 ON_UPDATE_COMMAND_UI(ID_PEN_OTHERC, &CDrawView::OnUpdatePenOtherc)
+ON_COMMAND(ID_DRAW_WORD, &CDrawView::OnDrawWord)
+ON_UPDATE_COMMAND_UI(ID_DRAW_WORD, &CDrawView::OnUpdateDrawWord)
+ON_COMMAND(ID_DRAW_PICTURE, &CDrawView::OnDrawPicture)
+ON_UPDATE_COMMAND_UI(ID_DRAW_PICTURE, &CDrawView::OnUpdateDrawPicture)
 END_MESSAGE_MAP()
 
 // CDrawView 构造/析构
@@ -110,6 +114,18 @@ CDrawView::CDrawView()
 
 	brushColorSelected = false;
 	penColorSelected = false;
+
+	// 初始化字体
+	wcscpy_s(m_fontName, LF_FACESIZE, L"宋体");
+	m_iFontSize = 120;
+	m_font.CreatePointFont(m_iFontSize, m_fontName);
+	m_font.GetLogFont(&m_logFont);
+	m_textColor = RGB(0, 0, 0);
+	m_bItalic = false;
+	m_bBold = false;
+	m_bUnderline = false;
+	m_bStrikeOut = false;
+
 }
 
 CDrawView::~CDrawView()
@@ -134,6 +150,54 @@ void CDrawView::OnDraw(CDC* pDC)
 		return;
 
 	// TODO: 在此处为本机数据添加绘制代码
+	// test
+	/*
+	// pDC->TextOut(10, 30, L"Test text");
+	// 选入字体
+	CFont ft, *oldft;
+	ft.CreatePointFont(150, L"隶书");
+	oldft = pDC->SelectObject(&ft);
+
+	// 前景色与背景色
+	pDC->SetTextColor(RGB(255, 0, 0));
+	pDC->SetBkColor(RGB(0, 255, 0));
+
+	// 文字对齐方式
+	RECT rect;
+	GetClientRect(&rect);
+	int w = rect.right, h = rect.bottom;
+	pDC->TextOut(10, 10, L"这是左上角"); // 默认为“TA_LEFT | TA_TOP”
+	pDC->SetTextAlign(TA_CENTER);
+	pDC->TextOut(w / 2, 10, L"这是顶部中央");
+	pDC->SetTextAlign(TA_RIGHT);
+	pDC->TextOut(w - 10, 10, L"这是右上角");
+	pDC->SetTextAlign(TA_BOTTOM);
+	pDC->TextOut(10, h - 10, L"这是左下角");
+	pDC->SetTextAlign(TA_BOTTOM | TA_RIGHT);
+	pDC->TextOut(w - 10, h - 10, L"这是右下角");
+	// 恢复原本字体
+	pDC->SelectObject(oldft);
+	*/
+}
+
+
+
+BOOL CDrawView::SetMyFont(CDC *pDC, LPCTSTR name, int size, COLORREF col, int angle, BOOL italic, BOOL bold,
+	BOOL underline, BOOL strikeOut)
+{
+	int height = -MulDiv(size, pDC->GetDeviceCaps(LOGPIXELSY), 720);
+	CFont font; // m_font.DeleteObject(); 并用m_font代替font：
+	BOOL bOk = font.CreateFont(height, 0, angle, angle,
+		bold ? 700 : 400, italic, underline, strikeOut,
+		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_PITCH | FF_DONTCARE, name);
+	if (bOk) {
+		//font.GetLogFont(&m_logFont);
+		pDC->SelectObject(font);
+		pDC->SetTextColor(col);
+	}
+	return bOk;
 }
 
 
@@ -274,7 +338,32 @@ void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
 			ReleaseDC(pDC);
 		}
 	}
+	// 绘制文字
+	else if (jGraph == OUTWORD) {
+		CDC* pDC = GetDC();
+		SetMyFont(pDC, m_fontName, m_iFontSize, m_textColor, 0, m_bItalic, m_bBold, m_bUnderline, m_bStrikeOut);
+		pDC->TextOut(point.x, point.y, L"许皓啦啦啦啦~");
+		ReleaseDC(pDC);
+	}
+	// 绘制图片
+	else if (jGraph == OUTPICTURE) {
+		ReleaseCapture();
+		if (m_bLButtonDown) {
+			CDC* pDC = GetDC();
+			pDC->SelectObject(pGrayPen);
+			pDC->SetROP2(R2_XORPEN);
+			pDC->SetBkMode(TRANSPARENT);
+			pDC->SelectObject(pNowBrush);//设置填充
+			pDC->Rectangle(min(p0.x, pm.x), min(p0.y, pm.y), max(p0.x, pm.x), max(p0.y, pm.y));
 
+			// 绘图
+			pImg->Draw(pDC->m_hDC, min(p0.x, point.x), min(p0.y, point.y), abs(point.x - p0.x), abs(point.y - p0.y));
+			// 还原参数
+			m_bLButtonDown = FALSE;
+			m_bErase = FALSE;
+			ReleaseDC(pDC);
+		}
+	}
 	CView::OnLButtonUp(nFlags, point);
 }
 
@@ -365,6 +454,26 @@ void CDrawView::OnMouseMove(UINT nFlags, CPoint point)
 			ReleaseDC(pDC);//对应GetDC
 		}
 	}
+	// 绘制图片，选定图片范围
+	else if (jGraph == OUTPICTURE) {
+		SetCursor(LoadCursor(NULL, IDC_CROSS));
+		if (m_bLButtonDown) {
+			CDC* pDC = GetDC();
+			pDC->SelectObject(pGrayPen);
+			pDC->SetROP2(R2_XORPEN);
+			pDC->SetBkMode(TRANSPARENT);
+			pDC->SelectObject(pHollowBrush);//设置空刷填充
+			if (m_bErase) {
+				pDC->Rectangle(min(p0.x, pm.x), min(p0.y, pm.y), max(p0.x, pm.x), max(p0.y, pm.y));
+			}
+			else {
+				m_bErase = TRUE;
+			}
+			pDC->Rectangle(min(p0.x, point.x), min(p0.y, point.y), max(p0.x, point.x), max(p0.y, point.y));
+			pm = point;
+			ReleaseDC(pDC);//对应GetDC
+		}
+	}
 
 	CView::OnMouseMove(nFlags, point);
 }
@@ -401,7 +510,13 @@ void CDrawView::OnLButtonDown(UINT nFlags, CPoint point)
 		p0 = point;// 椭圆对角线一点
 		pm = p0;// 椭圆对角线另一点
 	}
-
+	// 绘制图片
+	else if (jGraph == OUTPICTURE) {
+		SetCapture();
+		m_bLButtonDown = TRUE;
+		p0 = point;// 矩形对角线一点
+		pm = p0;// 矩形对角线另一点
+	}
 	CView::OnLButtonDown(nFlags, point);
 }
 
@@ -868,7 +983,7 @@ void CDrawView::OnHsPattern()
 		sPath = fileDlg.GetPathName();
 		MessageBox(sPath, L"载入成功");
 		
-		hBitmap = (HBITMAP)::LoadImage(AfxGetInstanceHandle(), sPath, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
+		HBITMAP hBitmap = (HBITMAP)::LoadImage(AfxGetInstanceHandle(), sPath, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
 		delete pBitmap;
 		pBitmap = new CBitmap();
 		pBitmap->Attach(hBitmap);
@@ -892,3 +1007,60 @@ void CDrawView::OnUpdateHsPattern(CCmdUI *pCmdUI)
 }
 
 
+
+
+void CDrawView::OnDrawWord()
+{
+	// TODO: 在此添加命令处理程序代码
+	jGraph = OUTWORD;
+
+	CFontDialog fontDlg(&m_logFont);
+	fontDlg.m_cf.rgbColors = m_textColor;
+	if (fontDlg.DoModal() == IDOK) {
+		wcscpy_s(m_fontName, LF_FACESIZE, fontDlg.GetFaceName());
+		m_iFontSize = fontDlg.GetSize();
+		m_textColor = fontDlg.GetColor();
+		m_bItalic = fontDlg.IsItalic();
+		m_bBold = fontDlg.IsBold();
+		m_bStrikeOut = fontDlg.IsStrikeOut();
+		m_bUnderline = fontDlg.IsUnderline();
+	}
+
+
+	// 只需要在left buttom up完成绘制
+}
+
+
+void CDrawView::OnUpdateDrawWord(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	if (jGraph == OUTWORD) pCmdUI->SetCheck(true);
+	else pCmdUI->SetCheck(false);
+}
+
+
+void CDrawView::OnDrawPicture()
+{
+	// TODO: 在此添加命令处理程序代码
+	jGraph = OUTPICTURE;
+
+	wchar_t *filters = L"位图文件(*.bmp)|*.bmp|可交换图形格式文件(*.gif)|*.gif|联合图像专家组文件(*.jpg)|*.jpg|可移植网络图形文件(*.png)|*.png|所有文件(*.*)|*.*||";
+	CFileDialog fileDlg(TRUE, L"jpg", L"*.jpg", OFN_HIDEREADONLY, filters);
+	CString sPath;
+	if (fileDlg.DoModal() == IDOK) {
+		sPath = fileDlg.GetPathName();
+		pImg = new CImage();
+		pImg->Load(sPath);
+		if (!pImg->IsNull()) MessageBox(sPath, L"载入成功");
+		else MessageBox(sPath, L"载入失败");
+	}
+	
+}
+
+
+void CDrawView::OnUpdateDrawPicture(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	if (jGraph == OUTPICTURE) pCmdUI->SetCheck(true);
+	else pCmdUI->SetCheck(false);
+}
